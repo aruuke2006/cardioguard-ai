@@ -1,0 +1,29 @@
+{
+  "source": "https://physionet.org/content/mitdb/1.0.0/",
+  "license": "Open Data Commons Attribution License v1.0",
+  "record": {
+    "record_id": "119",
+    "source": "MIT-BIH Arrhythmia Database",
+    "sampling_frequency_hz": 360.0,
+    "number_of_channels": 2,
+    "channels": [
+      {
+        "index": 0,
+        "name": "MLII",
+        "units": "mV"
+      },
+      {
+        "index": 1,
+        "name": "V1",
+        "units": "mV"
+      }
+    ],
+    "sample_count": 650000,
+    "duration_seconds": 1805.5555555555557
+  },
+  "sha256": {
+    "119.hea": "658f01382d7280a06e2f4c06363569d477394a6898c69ee788bb383f6092df63",
+    "119.dat": "02a286a28e69b441568add915f16a2856b22bab893bf8729ee9654411ed3a5aa",
+    "119.atr": "fd919c8ea20eed4a22fb37984977f30ce48d382eefd2d90934bf947a88e0fd7b"
+  }
+}
