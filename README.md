@@ -1,43 +1,55 @@
 # CARDIOGUARD AI
 
-Lokal işləyən ECG layihəsi. Real MIT-BIH siqnalını göstərir, filtrləyir,
-pikləri tapır və təxmini BPM/RR hesablayır. Klinik diaqnoz üçün nəzərdə tutulmayıb.
+A locally running ECG analysis project. It displays real MIT-BIH signals, applies filtering, detects peaks, and estimates BPM and RR intervals. This project is not intended for clinical diagnosis.
 
-## Layihəni açmaq
+## Getting Started
 
-İki terminal aç. Hər ikisində bu layihənin qovluğundan başla.
+Open two terminals. In both terminals, start from the project root directory.
 
-**1. Backend**
+### 1. Backend
 
 ```bash
 cd backend
-#for Linux/Mac
-.venv/bin/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 
-#for Windows
+```
+
+For Linux/macOS:
+
+```bash
+.venv/bin/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+For Windows:
+
+```bash
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-**2. Frontend**
+### 2. Frontend
+
+Open a second terminal:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Brauzerdə aç: http://127.0.0.1:5173
+Open the application in your browser:
 
-ECG Analyzer bölməsində kanal və vaxt intervalı seç, sonra **Run analysis** bas.
-Normallaşdırma üçün **Normalization → Z-score** seçə bilərsən.
+[http://127.0.0.1:5173](http://127.0.0.1:5173)
 
-Siqnal, BPM/RR və AI nəticələrini birlikdə görmək üçün **MLII → Analyze with AI** bas.
-Bu düymə modelin sabit filtr və pik ayarlarını tətbiq edir. Adi **Run analysis**
-seçdiyin ayarlarla işləyir. Modelin versiyası və evaluation nəticələri AI Lab-da görünür.
+In the **ECG Analyzer** section, select a channel and time interval, then click **Run analysis**. You can select **Normalization → Z-score** to normalize the signal.
 
-## İlk quraşdırma
+To view the signal, BPM/RR measurements, and AI results together, click **MLII → Analyze with AI**. This button applies the model's predefined filtering and peak-detection settings. The regular **Run analysis** button uses your selected settings.
 
-Yalnız dependency-lər və dataset yoxdursa lazımdır. Node.js 24 və Python 3.13 ilə yoxlanıb.
+The model version and evaluation results are available in **AI Lab**.
 
-Backend qovluğunda:
+## Initial Setup
+
+This step is only required if dependencies or the dataset are missing. The project has been tested with Node.js 24 and Python 3.13.
+
+### Backend
+
+From the `backend` directory:
 
 ```bash
 python3 -m venv .venv
@@ -45,66 +57,76 @@ python3 -m venv .venv
 .venv/bin/python -m scripts.download_mitbih --annotations
 ```
 
-Frontend qovluğunda:
+### Frontend
+
+From the `frontend` directory:
 
 ```bash
 npm ci
 ```
 
-Windows-da `.venv/bin/python` yerinə `.venv\Scripts\python.exe` istifadə et.
+On Windows, use `.venv\Scripts\python.exe` instead of `.venv/bin/python`.
 
-## Fayllar haradadır?
+## Project Structure
 
-| Qovluq | Nə üçündür? |
-| --- | --- |
-| `backend/app/` | API, dataset oxunması və ECG hesablamaları |
-| `backend/tests/` | Backend testləri |
-| `backend/scripts/` | Dataset endirmə və nəticə yoxlama əmrləri |
-| `frontend/src/` | Səhifələr, düymələr və qrafik |
-| `data/mitbih/` | Lokal ECG faylları |
-| `docs/` | Qısa kod bələdçisi; köhnə hesabatlar `archive/` içindədir |
-| `.cache/` | Avtomatik yaranan cache və test nəticələri |
+| Directory | Purpose |
+|---|---|
+| `backend/app/` | API, dataset loading, and ECG calculations |
+| `backend/tests/` | Backend tests |
+| `backend/scripts/` | Dataset download and result validation scripts |
+| `frontend/src/` | Pages, buttons, and charts |
+| `data/mitbih/` | Local ECG files |
+| `docs/` | Short code guide; older reports are stored in `archive/` |
+| `.cache/` | Automatically generated cache and test results |
 
-Kodun izahı: [Qısa bələdçi](docs/development.md).
-Dataset mənbəyi: [MIT-BIH / PhysioNet](data/README.md).
+Code documentation: [Quick Guide](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/development.md).
 
-## Yoxlamaq
+Dataset source: [MIT-BIH / PhysioNet](https://github.com/aruuke2006/cardioguard-ai/blob/main/data/README.md).
 
-Backend qovluğunda:
+## Running Tests
+
+### Backend
+
+From the `backend` directory:
 
 ```bash
 .venv/bin/python -m pytest
 ```
 
-Frontend qovluğunda:
+### Frontend
+
+From the `frontend` directory:
 
 ```bash
 npm test
 npm run build
 ```
 
-Əlavə brauzer testləri lazım olsa:
+For additional browser tests:
 
 ```bash
 npm run test:e2e:install
 npm run test:e2e
 ```
 
-## Mövcud imkanlar
+## Features
 
-- Record 100, 106, 119, 200 və 208; hər sorğuda maksimum 30 saniyə.
-- Zoom, pan, hover və reset.
-- Filtrasiya, ayrıca z-score siqnalı, piklər və BPM/RR cədvəli.
-- Light/dark görünüş və ölçüsü dəyişən sidebar.
+- ECG records 100, 106, 119, 200, and 208; a maximum of 30 seconds per request.
+- Zoom, pan, hover, and reset controls.
+- Signal filtering, a separate Z-score-normalized signal, peak detection, and BPM/RR tables.
+- Light and dark themes, with a resizable sidebar.
 
-AI Lab artıq real N/PVC model nəticələrini göstərir. AI üçün MLII / 360 Hz istifadə olunur.
-3D Heart Explorer lokal anatomik ürək modeli ilə işləyir. Algorithms Lab 9 məlumat
-strukturunu və 7 alqoritmi real Python icra addımları ilə göstərir.
-Plotly və Three.js üçün build ölçü xəbərdarlığı var; build uğurla tamamlanır.
+AI Lab displays actual N/PVC model predictions. The AI model uses MLII signals sampled at 360 Hz.
 
-## AI modelini hazırlamaq
+The **3D Heart Explorer** uses a local anatomical heart model.
 
-Backend qovluğunda bir dəfə:
+**Algorithms Lab** demonstrates 9 data structures and 7 algorithms using actual Python execution steps.
+
+The build process displays bundle-size warnings for Plotly and Three.js, but the build completes successfully.
+
+## Training the AI Model
+
+Run the following commands once from the `backend` directory:
 
 ```bash
 .venv/bin/python -m pip install -r requirements-dev.txt
@@ -112,39 +134,58 @@ Backend qovluğunda bir dəfə:
 .venv/bin/python -m scripts.train_model
 ```
 
-Sonra **AI Lab → record seç → Classify beats**. Model backend açılarkən avtomatik
-öyrədilmir. Mövcud dataset faylları `--ml` ilə yenidən yazılmır.
+Then open **AI Lab**, select a record, and click **Classify beats**.
 
-Train: 100/106/200, validation: 119, test: 208. Eyni şəxsin döyüntüləri split-lər
-arasında qarışdırılmır. Yalnız N və V annotasiyaları istifadə olunur.
-Model, metadata və hazırlanmış dataset `data/models/` içində lokal saxlanılır.
-Ətraflı nəticələr: [Sprint 3](docs/sprint-3.md).
+The model is not trained automatically when the backend starts. Existing dataset files are not overwritten when using the `--ml` option.
 
-MVP inteqrasiyası və son yoxlamalar [Sprint 4](docs/sprint-4.md) hesabatındadır.
+### Dataset Splits and Model Details
+
+- Training records: 100, 106, and 200.
+- Validation record: 119.
+- Test record: 208.
+
+Beats from the same individual are not mixed across the training, validation, and test splits. Only N and V annotations are used.
+
+The model, metadata, and prepared dataset are stored locally in `data/models/`.
+
+Detailed results: [Sprint 3](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/sprint-3.md).
+
+MVP integration and final checks are documented in the [Sprint 4 report](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/sprint-4.md).
 
 ## 3D Heart Explorer
 
-Menyudan **3D Heart Explorer** aç. Mouse ilə sürüşdürərək döndər, scroll/pinch ilə
-zoom et. Sağ düymə ilə sürüşdürmək və ya iki barmaq pan edir. **Reset view** ilkin
-görünüşü bərpa edir. Modelə fokus verildikdə ox düymələri döndərir, `+` / `−` zoom,
-`Home` isə reset edir.
+Open **3D Heart Explorer** from the menu.
 
-Modeldə və ya siyahıda kamera, damar və daxili strukturları seçərək onların
-funksiyasını oxu. Hover qısa məlumat göstərir, **View inside** daxili strukturları
-açır. HRA Heart və Blood Vasculature Female v1.3 modelləri, mənbə xəritələri və
-CC BY 4.0 lisenziyası `frontend/public/models/heart/` içindədir.
+- Drag with the mouse to rotate the model.
+- Use the scroll wheel or pinch gestures to zoom.
+- Right-click and drag, or use two fingers, to pan.
+- Click **Reset view** to restore the initial view.
+- When the model is focused, use the arrow keys to rotate it, `+` / `−` to zoom, and `Home` to reset the view.
 
-Model əlavə download və ya API açarı tələb etmir. WebGL olmadıqda məlumat bələdçisi
-işləyir. Mənbə və yoxlama nəticələri [Sprint 5](docs/sprint-5.md) hesabatındadır.
+Select the camera, blood vessels, and internal structures in the model or the list to read about their functions.
+
+Hovering over an element displays a short description. Click **View inside** to explore internal structures.
+
+The HRA Heart and Blood Vasculature Female v1.3 models, source maps, and CC BY 4.0 license are located in `frontend/public/models/heart/`.
+
+The model does not require additional downloads or API keys. If WebGL is unavailable, the informational guide remains accessible.
+
+Sources and validation results: [Sprint 5 report](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/sprint-5.md).
 
 ## Algorithms Lab
 
-Menyudan **Algorithms Lab** aç. Kateqoriya və alqoritm seç, giriş məlumatlarını
-dəyiş və **Run** bas. **Pause**, **Step Forward** və **Reset** ilə addımları izlə;
-sürət 0.5x–4x aralığındadır. Struktur nümayişlərində əməliyyatları **Add operation**
-ilə növbəyə əlavə edə bilərsən.
+Open **Algorithms Lab** from the menu.
 
-Bubble Sort və Merge Sort üçün **Compare** seçimi eyni girişi yan-yana göstərir.
-Binary Search sıralanmış giriş tələb edir. Dijkstra mənfi çəkiləri qəbul etmir.
-Bu laboratoriya tədris üçündür. Yeni dependency, dataset və ya API açarı tələb etmir.
-API, fayllar, limitlər və yoxlamalar: [Sprint 6](docs/sprint-6.md).
+Select a category and algorithm, modify the input data, and click **Run**.
+
+Use **Pause**, **Step Forward**, and **Reset** to follow the execution steps. The playback speed ranges from 0.5x to 4x.
+
+In data structure demonstrations, you can add operations to the queue using **Add operation**.
+
+For Bubble Sort and Merge Sort, the **Compare** option displays both algorithms side by side using the same input.
+
+Binary Search requires sorted input. Dijkstra's algorithm does not support negative edge weights.
+
+This laboratory is designed for educational purposes. It does not require additional dependencies, datasets, or API keys.
+
+API, files, limits, and validation details: [Sprint 6 report](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/sprint-6.md).
