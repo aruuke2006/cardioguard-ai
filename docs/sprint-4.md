@@ -1,74 +1,105 @@
 # Phase 1 — Sprint 4
 
-Yekun yoxlama tarixi 17 noyabr 2026.
+**Final verification date: November 17, 2026**
 
-## A. Sprintlərin vəziyyəti
+## A. Sprint Status
 
-| Sprint | Status | Yoxlanmış nəticə |
-| --- | --- | --- |
-| 1 | COMPLETE | Lokal record seçimi, real ECG, zoom/pan/hover/reset |
-| 2 | COMPLETE | Filtrləmə, z-score, piklər, BPM/RR və annotasiya müqayisəsi |
-| 3 | COMPLETE | Real N/PVC təlimi, saxlanmış model, inference API və AI Lab |
-| 4 | COMPLETE | Birləşdirilmiş analiz, xəta cavabları və desktop/tablet/mobil testləri |
+| Sprint | Status | Verified Results |
+|---|---|---|
+| 1 | COMPLETE | Local record selection, real ECG signals, zoom, pan, hover, and reset |
+| 2 | COMPLETE | Filtering, Z-score normalization, peak detection, BPM/RR calculations, and annotation comparison |
+| 3 | COMPLETE | Real N/PVC training, saved model, inference API, and AI Lab |
+| 4 | COMPLETE | Combined analysis, error responses, and desktop/tablet/mobile testing |
 
-## B. Tamamlanan dəyişikliklər
+## B. Completed Changes
 
-- ECG Analyzer-də **Analyze with AI** eyni siqnalı və aşkarlanmış pikləri BPM/RR və modelə ötürür. N/PVC sayları, ehtimallar və qrafik işarələri birlikdə göstərilir.
-- Mövcud analiz endpoint-inə `include_ai` əlavə edilib. AI nəticəsində siqnal massivi təkrar göndərilmir. Ayrı AI prediction endpoint-i də işləyir.
-- AI düyməsi MLII/360 Hz üçün modelin 0.5–40 Hz order-3 filtrini və standart pik ayarlarını tətbiq edir. Bu seçim ekranda göstərilir. Adi analiz fərdi ayarları qəbul edir.
-- Record siyahısındakı metadata təkrar istifadə olunur. İlk ECG yüklənməsi üçün API sorğuları üçdən ikiyə enib.
-- Model versiya və fayl dəyişikliklərinə görə yenidən yoxlanan cache-də saxlanılır. Paralel ilk sorğular üçün yükləmə qorunur. Korlanmış və dəyişdirilmiş fayllar 503 qaytarır.
-- İnference bir dəfə `predict_proba` hesablayır. Cavabın ölçüsü, sonlu qiymətləri və ehtimal cəmləri yoxlanılır. Pik refinement hər pik üçün bütün intervalın medianını təkrar hesablamır.
-- Qrafik formadakı hər dəyişiklikdə təkrar render edilmir. AI işarələri dolu dairə/romb, detektor işarələri konturla göstərilir.
-- Gözlənilməz backend xətaları JSON `detail` cavabı və server logu yaradır. OpenAPI xəta cavabları sənədləşdirilib. Dataset bərpa mesajları seçilmiş record-u göstərir.
-- Referenslə uyğun gəlməyən piklər barədə xəbərdarlıq əlavə edilib. Model versiyası, iki sinif məhdudiyyəti və kalibrasiya olunmamış ehtimallar göstərilir.
+- The **Analyze with AI** feature in ECG Analyzer passes the same signal and detected peaks to both BPM/RR calculations and the model. N/PVC counts, probabilities, and chart markers are displayed together.
+- The existing analysis endpoint was extended with `include_ai`. The AI response does not resend the signal array. The separate AI prediction endpoint also works.
+- The AI button applies the model's 0.5–40 Hz order-3 filter and default peak-detection settings for MLII/360 Hz. These settings are displayed in the interface. Regular analysis accepts custom settings.
+- Metadata from the record list is reused. The number of API requests required for the initial ECG loading was reduced from three to two.
+- The model is stored in a cache that is revalidated when the model version or file changes. Loading is protected against concurrent initial requests. Corrupted or modified files return 503.
+- Inference calculates `predict_proba` only once. Response dimensions, finite values, and probability sums are validated. Peak refinement no longer recalculates the median of the entire interval for every peak.
+- The chart is not re-rendered for every form change. AI markers are displayed as filled circles/diamonds, while detector markers use outlines.
+- Unexpected backend errors produce a JSON `detail` response and a server log entry. OpenAPI error responses are documented. Dataset recovery messages identify the selected record.
+- A warning was added for peaks that do not match reference annotations. The model version, two-class limitation, and uncalibrated probabilities are displayed.
 
-### Sprint 3 yenidən yoxlandı
+### Sprint 3 Re-verification
 
-Beş real MIT-BIH record-un `.hea`, `.dat`, `.atr` faylları ilə dataset yenidən hazırlanıb və RandomForest ayrıca müvəqqəti qovluqda öyrədilib. Hazırkı model `603d5a015e2f5cc4`, yoxlama təlimi `6ea0ce5de8fe37c0` olub. Mənbə hash-ləri, seçilmiş nümunələr və evaluation nəticələri uyğun gəlib.
+The dataset was rebuilt using the `.hea`, `.dat`, and `.atr` files of five real MIT-BIH records. A RandomForest model was trained separately in a temporary directory.
 
-| Split | Record-lar | Nümunə sayı |
-| --- | --- | --- |
+The current model identifier was `603d5a015e2f5cc4`, while the verification training identifier was `6ea0ce5de8fe37c0`.
+
+Source hashes, selected samples, and evaluation results matched.
+
+| Split | Records | Number of Samples |
+|---|---|---:|
 | Train | 100, 106, 200 | 6706 |
 | Validation | 119 | 1949 |
 | Test | 208 | 2528 |
 
-Patient qrupları split-lər arasında ayrıdır. Validation/test təlimə daxil edilmir. Held-out test accuracy **99.2089%**, macro F1 **99.1677%**, confusion matrix `[[1535,19],[1,973]]` olub. Bu ölçülər seçilmiş N/V annotasiyalarının mərkəzlərində klassifikasiyaya aiddir. Detektor səhvləri bu ölçülərə daxil edilmir.
+Patient groups are separated across the splits. Validation and test data are not included in training.
 
-## C. Dəyişdirilən fayllar
+Held-out test results:
 
-| Qovluq | Fayllar və məqsəd |
-| --- | --- |
-| `backend/app/` | `analysis.py`, `ml.py`, `processing.py` — ortaq analiz və cache |
-| `backend/app/` | `routes.py`, `schemas.py`, `main.py`, `dataset.py` — API kontraktı və xətalar |
-| `backend/scripts/` | `train_model.py` — medianın təkrar hesablanmasının aradan qaldırılması |
-| `backend/tests/` | `test_ml.py`, yeni `test_pipeline.py` — inteqrasiya, cache və xəta yoxlamaları |
-| `frontend/src/features/ecg/` | `ECGAnalyzer.tsx`, `SignalAnalysis.tsx`, `ECGChart.tsx`, `ecg.css` və əlaqəli üç test faylı |
-| `frontend/src/features/ai/` | `AILab.tsx`, yeni `ClassificationResults.tsx` — ortaq nəticə görünüşü |
-| `frontend/src/lib/` | `analysis.ts`, `ai.ts` — API tipləri |
-| `frontend/e2e/` | `ecg.spec.ts`, yeni `pipeline.spec.ts` — regresiya və bütün analiz axını |
-| `frontend/` | `playwright.config.ts` — tablet ölçüsü |
-| Sənədlər | `README.md`, `docs/development.md`, bu hesabat |
+- Accuracy: **99.2089%**
+- Macro F1: **99.1677%**
+- Confusion matrix: `[[1535,19],[1,973]]`
 
-## D. İcra edilmiş yoxlamalar
+These metrics apply to classification at the centers of selected N/V annotations. Detector errors are not included in these metrics.
 
-| Qovluq və əmr | Faktiki nəticə |
-| --- | --- |
-| `backend/` — `.venv/bin/python -m pytest -q` | **154 passed**, skip yoxdur |
-| `frontend/` — `npm test` | **44 passed**, 9 test faylı |
-| `frontend/` — `npm run build` | TypeScript yoxlaması və production build keçdi |
-| `frontend/` — `npm run test:e2e` | **24 passed**, Chromium desktop/tablet/mobil |
-| `backend/` — `.venv/bin/python -m pip check` | Dependency konflikti yoxdur |
-| `backend/` — `.venv/bin/python -m scripts.evaluate_ecg --full-record` | Record 100, iki kanal üzrə 122 interval |
-| Layihə kökü — `git diff --check` | Whitespace xətası yoxdur |
+## C. Modified Files
 
-Ümumilikdə **222 avtomatlaşdırılmış test** keçdi. Brauzerdə 1440×1000, 1024×1366 və 393×852 ölçüləri yoxlandı. Birləşdirilmiş nəticə 820×1180 tablet ölçüsündə də yoxlandı. Real siqnal, BPM/RR, model versiyası, N/PVC sayları, marker koordinatları, ehtimal cədvəli, interval dəyişməsi, naviqasiya, theme və sidebar test edildi. Çatışmayan model/dataset və API xətaları brauzerdə idarə olunan cavablarla yoxlandı. Retry real backend nəticəsi ilə bərpa olundu.
+| Directory | Files and Purpose |
+|---|---|
+| `backend/app/` | `analysis.py`, `ml.py`, `processing.py` — shared analysis and caching |
+| `backend/app/` | `routes.py`, `schemas.py`, `main.py`, `dataset.py` — API contracts and error handling |
+| `backend/scripts/` | `train_model.py` — removes repeated median calculations |
+| `backend/tests/` | `test_ml.py`, new `test_pipeline.py` — integration, cache, and error checks |
+| `frontend/src/features/ecg/` | `ECGAnalyzer.tsx`, `SignalAnalysis.tsx`, `ECGChart.tsx`, `ecg.css`, and three related test files |
+| `frontend/src/features/ai/` | `AILab.tsx`, new `ClassificationResults.tsx` — shared results display |
+| `frontend/src/lib/` | `analysis.ts`, `ai.ts` — API types |
+| `frontend/e2e/` | `ecg.spec.ts`, new `pipeline.spec.ts` — regression testing and complete analysis workflow |
+| `frontend/` | `playwright.config.ts` — tablet viewport configuration |
+| Documentation | `README.md`, `docs/development.md`, and this report |
 
-Backend testləri beş real record-un tam API axınını da işlətdi. Ayrıca testlər model olmadıqda adi analizin işləməsini, yanlış parametrləri, korlanmış artifact-ları, paralel cache yüklənməsini və gözlənilməz 500 cavabını yoxlayır.
+## D. Completed Verification
 
-Tam record-100 müqayisəsi əvvəlki saxlanmış nəticələrlə uyğun gəldi. Kanal 0 üçün TP/FP/FN **2261/0/12**, kanal 1 üçün **2253/0/20** oldu.
+| Directory and Command | Actual Result |
+|---|---|
+| `backend/` — `.venv/bin/python -m pytest -q` | **154 passed**, no skipped tests |
+| `frontend/` — `npm test` | **44 passed**, 9 test files |
+| `frontend/` — `npm run build` | TypeScript checks and production build passed |
+| `frontend/` — `npm run test:e2e` | **24 passed**, Chromium desktop/tablet/mobile |
+| `backend/` — `.venv/bin/python -m pip check` | No dependency conflicts |
+| `backend/` — `.venv/bin/python -m scripts.evaluate_ecg --full-record` | Record 100, 122 intervals across two channels |
+| Project root — `git diff --check` | No whitespace errors |
 
-Təlim yoxlaması `.venv/bin/python` ilə aşağıdakı çağırışları icra etdi.
+A total of **222 automated tests** passed.
+
+Browser testing covered the following viewport sizes:
+
+- 1440 × 1000
+- 1024 × 1366
+- 393 × 852
+
+The combined results were also tested at a tablet viewport of 820 × 1180.
+
+The tests covered real signals, BPM/RR, model version, N/PVC counts, marker coordinates, probability tables, interval changes, navigation, theme, and sidebar behavior.
+
+Missing model/dataset scenarios and API errors were tested using controlled browser responses. Retry functionality was verified using actual backend results.
+
+Backend tests also exercised the complete API workflow for five real records.
+
+Additional tests verified that regular analysis works when the model is unavailable, as well as invalid parameters, corrupted artifacts, concurrent cache loading, and unexpected 500 responses.
+
+Full-record comparison for record 100 matched previously saved results:
+
+- Channel 0: TP/FP/FN = **2261/0/12**
+- Channel 1: TP/FP/FN = **2253/0/20**
+
+### Model Training Verification
+
+The training verification used `.venv/bin/python` to execute the following calls:
 
 ```python
 from pathlib import Path
@@ -84,32 +115,50 @@ with TemporaryDirectory(dir="../.cache", prefix="sprint-4-model-") as folder:
     assert current["evaluation"] == result["evaluation"]
 ```
 
-Lokal ölçmədə cache-siz model yüklənməsinin medianı 30 təkrarda **12.258 ms**, cache ilə 100 təkrarda **0.053 ms** oldu. Beş record üçün 30 saniyəlik birləşdirilmiş TestClient sorğuları **14.389–21.201 ms** çəkdi. Bunlar bu maşındakı prosesdaxili ölçmələrdir.
+### Performance Measurements
 
-Build Plotly chunk-u üçün ölçü xəbərdarlığı verdi. Ayrı lint əmri konfiqurasiya edilməyib. Brauzer yoxlamaları Chromium-da icra edilib.
+In local measurements:
 
-## E. Qalan məhdudiyyətlər
+- Median model loading time without cache: **12.258 ms**, across 30 repetitions.
+- Median model loading time with cache: **0.053 ms**, across 100 repetitions.
+- Combined 30-second TestClient requests for five records: **14.389–21.201 ms**.
 
-| Səviyyə | Vəziyyət |
-| --- | --- |
-| Kritik/yüksək texniki bloker | Yoxlanmış lokal MVP axınında aşkarlanmadı |
-| Orta | Detektor bəzi morfologiyalarda pikləri qaçırır. Record 208-in ilk 30 saniyəsində 52 annotasiya edilmiş döyüntüdən 35-i uyğunlaşdırıldı, 17-si qaçırıldı. BPM/RR və AI sayları bundan təsirlənir. Ekran bu uyğunsuzluğu bildirir. |
-| Orta | Model yalnız beş record və N/V sinifləri ilə məhdudlaşır. Digər ritmlər bu iki sinfə təyin oluna bilər. Ehtimallar kalibrasiya edilməyib. |
-| Aşağı | Lazy yüklənən Plotly chunk-u təxminən 1.17 MB, gzip ilə 388 KB-dır. |
+These are process-level measurements obtained on the local machine.
 
-Detektor üzrə bu nəticə tədqiqat MVP-sinin ölçülmüş məhdudiyyəti kimi saxlanılır. Məhsul təxmini alqoritm nəticələri göstərir. Daha geniş dəqiqlik iddiaları üçün müxtəlif record-larda əlavə detector və classifier qiymətləndirilməsi lazımdır.
+The build produced a bundle-size warning for the Plotly chunk.
 
-## F. Phase 1 qərarı
+No separate lint command is configured. Browser verification was performed using Chromium.
 
-**COMPLETE — lokal tədris və tədqiqat MVP-si üzrə. Phase 2 inkişafına keçmək olar.**
+## E. Remaining Limitations
 
-Dataset → filtr → piklər → BPM/RR → klassifikasiya → API → dashboard axını real data ilə işləyir. Məlumatların sample/time uyğunluğu, modelin yenidən öyrədilməsi, xətalar və əvvəlki imkanlar testlərlə yoxlanıb. Yuxarıdakı dəqiqlik məhdudiyyətləri bu qərarın əhatəsini müəyyən edir.
+| Severity | Status |
+|---|---|
+| Critical/high technical blockers | None identified in the verified local MVP workflow |
+| Medium | The detector misses peaks in some morphologies. In the first 30 seconds of record 208, 35 of 52 annotated beats were matched, while 17 were missed. This affects BPM/RR and AI counts. The interface reports this mismatch. |
+| Medium | The model is limited to five records and N/V classes. Other rhythms may be assigned to one of these two classes. Probabilities are not calibrated. |
+| Low | The lazily loaded Plotly chunk is approximately 1.17 MB, or 388 KB when gzipped. |
 
-## G. Sprint 5 üçün növbəti addımlar
+This detector result is retained as a measured limitation of the research MVP.
 
-1. Lokal saxlanacaq, lisenziyası aydın anatomik 3D ürək asset-i seçmək.
-2. Mövcud Heart Explorer bölməsinə rotate, zoom və reset əlavə etmək.
-3. Ürək hissələrinin seçilməsi, adları və qısa tədris izahlarını hazırlamaq.
-4. Modelin yüklənməsi, WebGL xətası, tablet idarəetməsi və render performansını yoxlamaq.
+The product displays estimated algorithmic results. Broader accuracy claims require additional detector and classifier evaluation across diverse records.
 
-İstifadə qaydası və API sorğu nümunəsi [qısa bələdçidə](development.md) verilib.
+## F. Phase 1 Decision
+
+**COMPLETE — as a local educational and research MVP. Ready to proceed to Phase 2 development.**
+
+The following workflow operates with real data:
+
+Dataset → Filtering → Peak Detection → BPM/RR → Classification → API → Dashboard
+
+Sample/time alignment, model retraining, error handling, and previous features have been verified through testing.
+
+The accuracy limitations described above define the scope of this completion decision.
+
+## G. Next Steps for Sprint 5
+
+1. Select a locally stored anatomical 3D heart asset with a clearly defined license.
+2. Add rotation, zoom, and reset functionality to the existing Heart Explorer section.
+3. Implement heart structure selection, names, and short educational explanations.
+4. Test model loading, WebGL errors, tablet controls, and rendering performance.
+
+Usage instructions and API request examples are available in the [Quick Guide](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/development.md).
