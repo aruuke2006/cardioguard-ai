@@ -1,54 +1,58 @@
-# Qısa kod bələdçisi
+# Quick Code Guide
 
-Gündəlik iş üçün README-dəki iki serveri başlatmaq kifayətdir.
+For everyday development, starting the two servers described in the README is sufficient.
 
-## Backend: əvvəl bu fayllara bax
+## Backend: Key Files to Review First
 
-| Fayl | İşi |
-| --- | --- |
-| `backend/app/main.py` | FastAPI-ni başladır, xəta cavablarını hazırlayır |
-| `backend/app/routes.py` | Mövcud 7 ECG/AI/health API endpoint-i |
-| `backend/app/algorithms/` | Laboratoriyanın strukturları, alqoritmləri, metadata və 2 API yolu |
-| `backend/app/schemas.py` | API-yə gedən və API-dən gələn məlumat sahələri |
-| `backend/app/dataset.py` | Lokal MIT-BIH fayllarını oxuyur |
-| `backend/app/processing.py` | Filtrasiya, pik aşkarlanması, normallaşdırma və BPM/RR riyaziyyatı |
-| `backend/app/analysis.py` | Bu addımları birləşdirib analiz cavabını qaytarır |
-| `backend/app/ml.py` | Ortaq heartbeat feature-ləri və saxlanmış modeldən proqnoz |
+| File | Purpose |
+|---|---|
+| `backend/app/main.py` | Starts FastAPI and prepares error responses |
+| `backend/app/routes.py` | Contains the existing 7 ECG/AI/health API endpoints |
+| `backend/app/algorithms/` | Contains the laboratory's data structures, algorithms, metadata, and 2 API routes |
+| `backend/app/schemas.py` | Defines the data fields sent to and received from the API |
+| `backend/app/dataset.py` | Reads local MIT-BIH files |
+| `backend/app/processing.py` | Handles filtering, peak detection, normalization, and BPM/RR calculations |
+| `backend/app/analysis.py` | Combines these steps and returns the analysis response |
+| `backend/app/ml.py` | Contains shared heartbeat features and predictions from the saved model |
 
-Axın sadədir: **sorğu → routes → dataset/analysis → cavab**.
+The basic workflow is:
 
-`processing.py` içində əsas funksiyalar:
+**Request → routes → dataset/analysis → response**
 
-- `preprocess`: siqnalı filtrləyir.
-- `detect_peaks`: QRS pik namizədlərini tapır.
-- `normalize`: z-score hesablayır.
-- `rr_statistics`: piklər arasındakı məsafədən RR və BPM hesablayır.
-- `compare_peaks`: aşkarlanan pikləri referens annotasiyalarla müqayisə edir.
+### Main Functions in `processing.py`
 
-## Frontend: əsas ekran faylları
+- `preprocess`: Filters the signal.
+- `detect_peaks`: Detects candidate QRS peaks.
+- `normalize`: Calculates Z-score normalization.
+- `rr_statistics`: Calculates RR intervals and BPM from the distances between peaks.
+- `compare_peaks`: Compares detected peaks with reference annotations.
 
-| Fayl | İşi |
-| --- | --- |
-| `frontend/src/App.tsx` | Hansı səhifənin açılacağını seçir |
-| `frontend/src/features/ecg/ECGAnalyzer.tsx` | Record, kanal və interval seçimi |
-| `frontend/src/features/ecg/SignalAnalysis.tsx` | Analiz düyməsi, ayarlar və nəticələr |
-| `frontend/src/features/ecg/ECGChart.tsx` | Siqnal və pikləri qrafikdə göstərir |
-| `frontend/src/hooks/useApiResource.ts` | API sorğusu, loading, error və retry |
-| `frontend/src/styles.css` | Ümumi görünüş |
+## Frontend: Main Screen Files
 
-## API yolları
+| File | Purpose |
+|---|---|
+| `frontend/src/App.tsx` | Determines which page should be displayed |
+| `frontend/src/features/ecg/ECGAnalyzer.tsx` | Provides record, channel, and interval selection |
+| `frontend/src/features/ecg/SignalAnalysis.tsx` | Contains the analysis button, settings, and results |
+| `frontend/src/features/ecg/ECGChart.tsx` | Displays the signal and detected peaks on a chart |
+| `frontend/src/hooks/useApiResource.ts` | Handles API requests, loading states, errors, and retries |
+| `frontend/src/styles.css` | Defines the overall appearance |
+
+## API Endpoints
 
 - `GET /api/v1/health`
 - `GET /api/v1/ecg/records`
 - `GET /api/v1/ecg/records/100`
 - `GET /api/v1/ecg/records/100/signal`
 - `POST /api/v1/ecg/analyze`
-- `GET /api/v1/ai/model` — modelin hazır olub-olmadığı və real versiyası
-- `POST /api/v1/ai/predict` — seçilmiş interval üçün N/PVC model təxminləri
-- `GET /api/v1/algorithms` — 16 seçim, izahlar, pseudocode və işlək nümunələr
-- `POST /api/v1/algorithms/execute` — girişdən real icra addımlarını və nəticəni yaradır
+- `GET /api/v1/ai/model` — Returns the model's availability status and actual version.
+- `POST /api/v1/ai/predict` — Returns N/PVC model predictions for the selected interval.
+- `GET /api/v1/algorithms` — Returns 16 options, explanations, pseudocode, and working examples.
+- `POST /api/v1/algorithms/execute` — Generates actual execution steps and results from the supplied input.
 
-`POST /api/v1/ecg/analyze` üçün birləşdirilmiş analiz sorğusu aşağıdakı kimidir.
+### Combined Analysis Request
+
+The following is an example of a combined analysis request for `POST /api/v1/ecg/analyze`:
 
 ```json
 {
@@ -60,76 +64,126 @@ Axın sadədir: **sorğu → routes → dataset/analysis → cavab**.
 }
 ```
 
-`include_ai` standart olaraq `false` olur. `true` seçildikdə eyni filtrli siqnal və
-piklər həm BPM/RR, həm də `ai_classification` üçün istifadə edilir. AI MLII/360 Hz,
-0.5–40 Hz order-3 filtr və standart detection ayarları tələb edir. Digər ayarlar
-422 qaytarır. Z-score qrafikdə ayrıca göstərilə bilər.
+The `include_ai` parameter defaults to `false`.
 
-Naməlum record 404, səhv giriş 422, çatışmayan dataset/model 503 qaytarır.
-Gözlənilməz xəta 500 və `detail` mesajı qaytarır, texniki məlumat backend loguna yazılır.
-Model statusu model olmadıqda `available=false` ilə 200 qaytarır.
-Hər signal sorğusu maksimum 30 saniyə, analiz intervalı 0.5–30 saniyədir.
-Frontend sorğuları 15 saniyədən sonra dayandırır və retry göstərir.
-Maşınla oxunan tam API sənədi lokal backend-də `/openapi.json` yolundadır.
+When set to `true`, the same filtered signal and detected peaks are used for both BPM/RR calculations and `ai_classification`.
 
-Orijinal və filtrli siqnal mV olaraq qalır. Z-score ayrıca, vahidsiz sağ oxda
-verilir. Piklər və BPM filtrli siqnaldan hesablanır. Nəticələr diaqnoz deyil.
+AI analysis requires MLII at 360 Hz, an order-3 filter with a 0.5–40 Hz frequency range, and the default detection settings. Other settings return a 422 response.
 
-AI təlim əmri `backend/scripts/train_model.py`, ekranı isə
-`frontend/src/features/ai/AILab.tsx` içindədir. Feature çıxarılması train və predict
-üçün ortaqdır. Annotasiyalar yalnız təlim/evaluation üçündür; predict onları oxumur.
-Real modelin hazırlanması və ölçüləri [Sprint 3](sprint-3.md) sənədindədir.
+Z-score normalization can be displayed separately on the chart.
+
+### Error Handling and Limits
+
+- Unknown records return 404.
+- Invalid input returns 422.
+- Missing datasets or models return 503.
+- Unexpected errors return 500 with a `detail` message; technical information is written to the backend log.
+
+When the model is unavailable, the model status endpoint returns HTTP 200 with `available=false`.
+
+Each signal request is limited to a maximum of 30 seconds. The analysis interval must be between 0.5 and 30 seconds.
+
+Frontend requests are cancelled after 15 seconds and display a retry option.
+
+The complete machine-readable API specification is available locally at `/openapi.json` on the running backend.
+
+### Signal Units and Interpretation
+
+Both the original and filtered signals remain in mV.
+
+The Z-score signal is displayed separately on the right axis without physical units.
+
+Peak detection and BPM calculations are based on the filtered signal.
+
+The results are not medical diagnoses.
+
+## AI Model Implementation
+
+The AI training script is located at:
+
+`backend/scripts/train_model.py`
+
+The AI Lab interface is located at:
+
+`frontend/src/features/ai/AILab.tsx`
+
+Feature extraction is shared between training and prediction.
+
+Annotations are used only for training and evaluation; the prediction process does not read them.
+
+The training process and actual model evaluation metrics are documented in [Sprint 3](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/sprint-3.md).
 
 ## 3D Heart Explorer
 
-`App.tsx` Heart Explorer səhifəsini menyudan açıldıqda lazy yükləyir.
-3D üçün birbaşa Three.js və onun `GLTFLoader` / `OrbitControls` modulları istifadə olunur.
+`App.tsx` lazy-loads the Heart Explorer page when it is opened from the menu.
 
-| Fayl | İşi |
-| --- | --- |
-| `frontend/src/features/heart/HeartExplorer.tsx` | Səhifə, struktur seçimi, qatlar və anatomiya izahları |
-| `frontend/src/features/heart/HeartViewer.tsx` | Loading, xəta, retry və idarəetmə düymələri |
-| `frontend/src/features/heart/heart-scene.ts` | GLB oxunması, işıq, kamera, picking və resursların azad edilməsi |
-| `frontend/src/features/heart/anatomy.ts` | Kamera, damar və daxili strukturların mənbə xəritəsi və izahları |
-| `frontend/public/models/heart/` | Lokal model, crosswalk, mənbə hash-ləri və lisenziya |
+The 3D functionality uses Three.js directly, together with its `GLTFLoader` and `OrbitControls` modules.
 
-Struktur seçimi `anatomy.ts` mənbə xəritəsinə əsaslanır. Kamera, damar və daxili
-strukturlar seçilir; hover qısa məlumat göstərir və layer controls daxili görünüşü açır.
-Render yalnız görünüş, seçim və ölçü dəyişəndə baş verir.
-Səhifədən çıxış fetch-i dayandırır, event/observer-ləri silir və WebGL resurslarını
-azad edir. Retry yeni viewer yaradır.
+| File | Purpose |
+|---|---|
+| `frontend/src/features/heart/HeartExplorer.tsx` | Page layout, structure selection, layers, and anatomical explanations |
+| `frontend/src/features/heart/HeartViewer.tsx` | Loading, error handling, retry functionality, and control buttons |
+| `frontend/src/features/heart/heart-scene.ts` | GLB loading, lighting, camera, picking, and resource disposal |
+| `frontend/src/features/heart/anatomy.ts` | Source mapping and explanations for the camera, blood vessels, and internal structures |
+| `frontend/public/models/heart/` | Local models, crosswalk, source hashes, and license |
 
-Model mənbəyi, mövcud geometriyanın əhatəsi və testlər [Sprint 5](sprint-5.md) hesabatındadır.
+Structure selection is based on the source mapping in `anatomy.ts`.
+
+The camera, blood vessels, and internal structures can be selected. Hovering displays brief information, while the layer controls reveal the internal view.
+
+Rendering occurs only when the view, selection, or dimensions change.
+
+When the user leaves the page, active fetch requests are cancelled, event listeners and observers are removed, and WebGL resources are released.
+
+Retry creates a new viewer instance.
+
+The model sources, coverage of the available geometry, and tests are documented in the [Sprint 5 report](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/sprint-5.md).
 
 ## Algorithms Lab
 
-Axın: **giriş → Pydantic yoxlaması → Python icrası → addımlar → React playback**.
-Backend hər addımın ayrıca surətini saxlayır. Frontend həmin addımları göstərir;
-Pause və Reset yeni hesablama başlatmır. Giriş dəyişəndə növbəti Run yeni sorğu göndərir.
+The execution workflow is:
 
-| Fayl | İşi |
-| --- | --- |
-| `backend/app/algorithms/structures.py` | 9 strukturun orijinal implementasiyası |
-| `backend/app/algorithms/execution.py` | 7 alqoritm, struktur əməliyyatları, addım və nəticələr |
-| `backend/app/algorithms/catalog.py` | İzahlar, complexity, əməliyyat formaları və nümunələr |
-| `backend/app/algorithms/schemas.py`, `routes.py` | Pydantic müqaviləsi və 2 endpoint |
-| `frontend/src/features/algorithms/AlgorithmsLab.tsx` | Seçim, giriş formaları, ortaq controls və addımların göstərilməsi |
-| `frontend/src/features/algorithms/AlgorithmVisualization.tsx` | Bar, graph, tree və struktur görünüşləri |
-| `frontend/src/features/algorithms/algorithms.css` | Mövcud dizayna uyğun görünüş |
-| `frontend/src/lib/algorithms.ts` | TypeScript sorğu/cavab tipləri |
+**Input → Pydantic validation → Python execution → execution steps → React playback**
 
-Səhv format və uyğun olmayan giriş 422 qaytarır. Boş strukturdan silmək kimi
-əməliyyat xətaları 200 cavabının `steps[].error` və `result.errors` sahələrində
-göstərilir; sonrakı düzgün əməliyyatlar davam edir. İstifadəçi kodu icra edilmir.
-Limitlər və API nümunəsi [Sprint 6](sprint-6.md) hesabatındadır.
+The backend stores a separate copy of each execution step.
 
-## Testlər və köhnə sənədlər
+The frontend displays these steps. Pause and Reset do not start a new calculation.
 
-Python testləri `backend/tests/`, komponent testləri frontend-də `*.test.tsx`,
-brauzer testləri `frontend/e2e/` içindədir. Onları dəyişiklikdən sonra işlət.
-Brauzer testləri ayrıca 18000/15173 portlarından istifadə edir; nəticələri
-`.cache/browser-tests` və `.cache/browser-report` qovluqlarına yazır.
+When the input changes, clicking Run again sends a new request.
 
-Əvvəlki sprint və audit hesabatları [archive/](archive/) içində saxlanılıb.
-Oradakı fayl yolları, CI və coverage məlumatları həmin tarixlərin vəziyyətidir.
-Hazırkı sadə versiyada ayrıca CI workflow, coverage həddi və Python lock faylı yoxdur.
+| File | Purpose |
+|---|---|
+| `backend/app/algorithms/structures.py` | Original implementations of 9 data structures |
+| `backend/app/algorithms/execution.py` | 7 algorithms, data structure operations, execution steps, and results |
+| `backend/app/algorithms/catalog.py` | Explanations, complexity information, operation forms, and examples |
+| `backend/app/algorithms/schemas.py`, `routes.py` | Pydantic contracts and 2 API endpoints |
+| `frontend/src/features/algorithms/AlgorithmsLab.tsx` | Selection, input forms, shared controls, and execution step display |
+| `frontend/src/features/algorithms/AlgorithmVisualization.tsx` | Bar, graph, tree, and data structure visualizations |
+| `frontend/src/features/algorithms/algorithms.css` | Styling consistent with the existing design |
+| `frontend/src/lib/algorithms.ts` | TypeScript request and response types |
+
+Invalid formats and incompatible input return 422.
+
+Operation errors, such as attempting to remove an element from an empty data structure, are reported in the `steps[].error` and `result.errors` fields of a 200 response. Subsequent valid operations continue to execute.
+
+User-supplied code is not executed.
+
+Limits and API examples are documented in the [Sprint 6 report](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/sprint-6.md).
+
+## Tests and Archived Documentation
+
+Python tests are located in `backend/tests/`.
+
+Frontend component tests use the `*.test.tsx` naming pattern.
+
+Browser tests are located in `frontend/e2e/`.
+
+Run the relevant tests after making changes.
+
+Browser tests use separate ports 18000 and 15173. Their results are written to `.cache/browser-tests` and `.cache/browser-report`.
+
+Previous sprint and audit reports are stored in the [archive/](https://github.com/aruuke2006/cardioguard-ai/blob/main/docs/archive) directory.
+
+File paths, CI information, and coverage data in those archived reports reflect the project state at the time they were written.
+
+In the current simplified version, there is no separate CI workflow, coverage threshold, or Python lock file.
